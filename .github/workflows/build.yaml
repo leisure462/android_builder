@@ -23,6 +23,12 @@ jobs:
       - name: Clone target project
         run: git clone --depth=1 ${{ steps.get-project.outputs.PROJECT }} project
 
+      - name: Debug – list what we actually cloned
+        working-directory: ./project
+        run: |
+          pwd
+          ls -al
+
       - name: Build the app
         working-directory: ./project
         run: |
