@@ -6,38 +6,56 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
+      # 1. 检出模板仓库（含 project-to-build）
       - name: Checkout the code
         uses: actions/checkout@v4
 
+      # 2. 安装 Node 20（Expo 官方推荐）
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+          cache-dependency-path: project/yarn.lock
+
+      # 3. 安装 JDK 17（Gradle 8 需要）
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
+      # 4. 读取要构建的仓库地址
       - name: Get project URL
         id: get-project
         run: echo "PROJECT=$(cat project-to-build)" >> $GITHUB_OUTPUT
 
+      # 5. 克隆真正的 RN 仓库
       - name: Clone target project
         run: git clone --depth=1 ${{ steps.get-project.outputs.PROJECT }} project
 
-      - name: Debug – list what we actually cloned
+      # 6. 安装 JS 依赖
+      - name: Install Node dependencies
         working-directory: ./project
-        run: |
-          pwd
-          ls -al
+        run: yarn install --frozen-lockfile
 
-      - name: Build the app
+      # 7. 生成原生 android 目录
+      - name: Generate native android folder
         working-directory: ./project
+        run: npx expo prebuild --platform android
+
+      # 8. 编译 Debug APK
+      - name: Build APK
+        working-directory: ./project/android
         run: |
-          if [ ! -f gradlew ]; then gradle wrapper; fi
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
 
+      # 9. 上传成品
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: cherry-studio-apk
-          path: project/app/build/outputs/apk/debug/*.apk
+          path: project/android/app/build/outputs/apk/debug/*.apk
