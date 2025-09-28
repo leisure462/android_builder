@@ -12,13 +12,11 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v4
 
-      # 2. 安装 Node 20（Expo 官方推荐）
+      # 2. 安装 Node 20（去掉缓存，避免路径找不到）
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: yarn
-          cache-dependency-path: project/yarn.lock
 
       # 3. 安装 JDK 17（Gradle 8 需要）
       - name: Set up JDK 17
