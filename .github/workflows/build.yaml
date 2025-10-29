@@ -48,10 +48,13 @@ jobs:
       - name: Build Release APK
         working-directory: ./project/android
         env:
-          GRADLE_OPTS: -Xmx6g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
+          # 堆内存 + Metaspace 一起给足
+          GRADLE_OPTS: -Xmx6g -XX:MaxMetaspaceSize=1g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
+          # 关闭并行 lint，防止同时吃光 Metaspace
+          LINT_OPTIONS: --stacktrace --no-daemon -x lint -x lintVitalAnalyzeRelease
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon --max-workers=2
+          ./gradlew assembleRelease --no-daemon --max-workers=2 $LINT_OPTIONS
 
       - name: Upload Release APK
         uses: softprops/action-gh-release@v2
