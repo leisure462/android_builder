@@ -40,18 +40,19 @@ jobs:
         working-directory: ./project
         run: npx expo prebuild --platform android
 
-      # ===== 关键：离线 bundle + release 编译 =====
       - name: Bundle JS assets (offline)
         working-directory: ./project
         run: npx expo export --platform android
 
+      # ===== 修复：加大内存 + 禁用 Daemon + 降并发 =====
       - name: Build Release APK
         working-directory: ./project/android
+        env:
+          GRADLE_OPTS: -Xmx6g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --no-daemon --max-workers=2
 
-      # ===== 上传到 GitHub Release =====
       - name: Upload Release APK
         uses: softprops/action-gh-release@v2
         with:
