@@ -1,0 +1,51 @@
+name: Android Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - uses: android-actions/setup-android@v3
+
+      - run: npm ci
+
+      - run: |
+          if [ -d android ]; then echo native; else npx expo prebuild --no-install; fi
+
+      - run: cd android && ./gradlew test
+
+      - run: cd android && ./gradlew assembleDebug
+
+      - run: cd android && ./gradlew assembleRelease
+
+      - run: cd android && ./gradlew app:bundleRelease
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-debug
+          path: android/app/build/outputs/apk/debug/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-release
+          path: android/app/build/outputs/apk/release/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aab-release
+          path: android/app/build/outputs/bundle/release/
